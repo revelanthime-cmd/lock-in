@@ -1,32 +1,336 @@
+import { useEffect, useMemo, useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import {
+  Play,
+  Pause,
+  Square,
+  Flame,
+  BarChart3,
+  User,
+  Palette,
+  TimerReset,
+} from "lucide-react"
+
+const themes = {
+  cyber: {
+    gradient: "from-violet-600 to-blue-500",
+    bg: "bg-black",
+  },
+  matrix: {
+    gradient: "from-green-500 to-emerald-700",
+    bg: "bg-black",
+  },
+  sunset: {
+    gradient: "from-orange-500 to-pink-600",
+    bg: "bg-black",
+  },
+}
+
 export default function LockInApp() {
+  const [screen, setScreen] = useState("home")
+  const [duration, setDuration] = useState(45 * 60)
+  const [timeLeft, setTimeLeft] = useState(45 * 60)
+  const [running, setRunning] = useState(false)
+  const [theme, setTheme] = useState("cyber")
+  const [xp, setXp] = useState(1240)
+  const [level, setLevel] = useState(7)
+  const [streak] = useState(14)
+  const [sessions, setSessions] = useState(23)
+  const [focusHours, setFocusHours] = useState(18)
+  const [completed, setCompleted] = useState(false)
+
+  useEffect(() => {
+    let interval
+
+    if (running && timeLeft > 0) {
+      interval = setInterval(() => {
+        setTimeLeft((prev) => prev - 1)
+      }, 1000)
+    }
+
+    if (timeLeft === 0) {
+      setRunning(false)
+      setCompleted(true)
+      setXp((x) => x + 120)
+      setSessions((s) => s + 1)
+      setFocusHours((f) => f + Math.floor(duration / 3600))
+    }
+
+    return () => clearInterval(interval)
+  }, [running, timeLeft, duration])
+
+  useEffect(() => {
+    setLevel(Math.floor(xp / 200))
+  }, [xp])
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = seconds % 60
+    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
+  }
+
+  const progress = useMemo(() => {
+    return ((duration - timeLeft) / duration) * 100
+  }, [duration, timeLeft])
+
+  const startPreset = (mins) => {
+    const seconds = mins * 60
+    setDuration(seconds)
+    setTimeLeft(seconds)
+    setRunning(true)
+    setCompleted(false)
+  }
+
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center p-10">
-      <div className="text-center max-w-xl">
-        <h1 className="text-6xl font-black tracking-tight mb-6">LOCK IN</h1>
-        <p className="text-zinc-400 text-lg mb-8">
-          Gen Z focus app concept with immersive sessions, streaks, stats, themes and ad-ready spaces.
-        </p>
+    <div className={`min-h-screen ${themes[theme].bg} text-white overflow-hidden`}>
+      <div className="max-w-md mx-auto min-h-screen flex flex-col justify-between p-5">
 
-        <div className="grid gap-4">
-          <div className="rounded-3xl bg-zinc-900 p-8 border border-zinc-800 shadow-2xl">
-            <div className="text-zinc-500 text-sm mb-2">CURRENT STREAK</div>
-            <div className="text-5xl font-bold">14 Days</div>
-          </div>
+        <AnimatePresence>
+          {completed && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-6"
+            >
+              <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-8 text-center w-full">
+                <div className="text-6xl mb-4">⚡</div>
+                <h2 className="text-3xl font-black mb-3">SESSION COMPLETE</h2>
+                <p className="text-zinc-400 mb-6">+120 XP earned</p>
+                <button
+                  onClick={() => setCompleted(false)}
+                  className="w-full py-4 rounded-2xl bg-white text-black font-bold"
+                >
+                  CONTINUE
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          <div className="rounded-3xl bg-gradient-to-br from-violet-600 to-blue-500 p-8 shadow-2xl">
-            <div className="text-sm opacity-80 mb-4">FOCUS SESSION</div>
-            <div className="text-7xl font-black mb-6">45:00</div>
-            <button className="bg-white text-black px-8 py-4 rounded-2xl font-bold text-lg hover:scale-105 transition">
-              START
-            </button>
-          </div>
+        <div>
+          <div className="flex items-center justify-between mb-8 pt-4">
+            <div>
+              <h1 className="text-4xl font-black tracking-tight">LOCK IN</h1>
+              <p className="text-zinc-500">Discipline beats mood.</p>
+            </div>
 
-          <div className="rounded-3xl bg-zinc-900 p-6 border border-zinc-800">
-            <div className="text-zinc-500 text-sm mb-4">AD SPACE PLACEHOLDER</div>
-            <div className="h-24 rounded-2xl bg-zinc-800 flex items-center justify-center text-zinc-500">
-              Future Ad Placement
+            <div className="flex items-center gap-2 bg-zinc-900 px-4 py-2 rounded-2xl border border-zinc-800">
+              <Flame className="text-orange-400" size={18} />
+              <span className="font-bold">{streak}</span>
             </div>
           </div>
+
+          {screen === "home" && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-5"
+            >
+              <div className={`rounded-[32px] bg-gradient-to-br ${themes[theme].gradient} p-8 shadow-2xl`}>
+                <div className="flex justify-between items-start mb-8">
+                  <div>
+                    <p className="opacity-80 text-sm">CURRENT LEVEL</p>
+                    <h2 className="text-5xl font-black">{level}</h2>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="opacity-80 text-sm">XP</p>
+                    <h2 className="text-3xl font-bold">{xp}</h2>
+                  </div>
+                </div>
+
+                <motion.div
+                  animate={{ scale: running ? [1, 1.03, 1] : 1 }}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                  className="w-56 h-56 mx-auto rounded-full bg-black/30 backdrop-blur-md flex flex-col items-center justify-center border border-white/10"
+                >
+                  <div className="text-6xl font-black mb-2">
+                    {formatTime(timeLeft)}
+                  </div>
+
+                  <div className="text-sm opacity-70">
+                    {running ? "LOCKED IN" : "READY"}
+                  </div>
+                </motion.div>
+
+                <div className="mt-8 w-full bg-black/30 h-3 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-white"
+                    animate={{ width: `${progress}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                {[15, 30, 45].map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => startPreset(m)}
+                    className="bg-zinc-900 border border-zinc-800 rounded-2xl py-5 font-bold hover:border-white transition"
+                  >
+                    {m}m
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex gap-3">
+                {!running ? (
+                  <button
+                    onClick={() => setRunning(true)}
+                    className="flex-1 py-5 rounded-2xl bg-white text-black font-black flex items-center justify-center gap-2"
+                  >
+                    <Play size={20} /> START
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setRunning(false)}
+                    className="flex-1 py-5 rounded-2xl bg-yellow-500 text-black font-black flex items-center justify-center gap-2"
+                  >
+                    <Pause size={20} /> PAUSE
+                  </button>
+                )}
+
+                <button
+                  onClick={() => {
+                    setRunning(false)
+                    setTimeLeft(duration)
+                  }}
+                  className="px-6 rounded-2xl bg-zinc-900 border border-zinc-800"
+                >
+                  <TimerReset />
+                </button>
+
+                <button
+                  onClick={() => {
+                    setRunning(false)
+                    setTimeLeft(duration)
+                  }}
+                  className="px-6 rounded-2xl bg-red-500/20 border border-red-500/40"
+                >
+                  <Square />
+                </button>
+              </div>
+
+              <div className="rounded-3xl bg-zinc-900 border border-zinc-800 p-5">
+                <div className="text-zinc-500 text-sm mb-3">AD SPACE PLACEHOLDER</div>
+                <div className="h-24 rounded-2xl bg-zinc-800 flex items-center justify-center text-zinc-500">
+                  Future Ad Placement
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {screen === "stats" && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="space-y-5"
+            >
+              <div className="rounded-3xl bg-zinc-900 p-6 border border-zinc-800">
+                <p className="text-zinc-500 mb-2">TOTAL FOCUS</p>
+                <h2 className="text-5xl font-black">{focusHours}h</h2>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-3xl bg-zinc-900 p-5 border border-zinc-800">
+                  <p className="text-zinc-500 text-sm">Sessions</p>
+                  <h3 className="text-3xl font-bold mt-2">{sessions}</h3>
+                </div>
+
+                <div className="rounded-3xl bg-zinc-900 p-5 border border-zinc-800">
+                  <p className="text-zinc-500 text-sm">Streak</p>
+                  <h3 className="text-3xl font-bold mt-2">{streak}</h3>
+                </div>
+              </div>
+
+              <div className="rounded-3xl bg-zinc-900 p-6 border border-zinc-800">
+                <p className="text-zinc-500 mb-5">WEEK ACTIVITY</p>
+
+                <div className="flex items-end justify-between h-48 gap-3">
+                  {[40, 80, 65, 100, 50, 90, 75].map((h, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ height: 0 }}
+                      animate={{ height: `${h}%` }}
+                      className={`w-full rounded-t-2xl bg-gradient-to-t ${themes[theme].gradient}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {screen === "themes" && (
+            <div className="space-y-4">
+              {Object.keys(themes).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTheme(t)}
+                  className={`w-full p-6 rounded-3xl border text-left transition ${
+                    theme === t
+                      ? "border-white bg-zinc-900"
+                      : "border-zinc-800 bg-zinc-950"
+                  }`}
+                >
+                  <div className={`h-24 rounded-2xl bg-gradient-to-br ${themes[t].gradient} mb-4`} />
+                  <h3 className="text-2xl font-bold capitalize">{t}</h3>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {screen === "profile" && (
+            <div className="space-y-5">
+              <div className="rounded-3xl bg-zinc-900 border border-zinc-800 p-8 text-center">
+                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-violet-500 to-blue-500 mx-auto mb-5" />
+                <h2 className="text-3xl font-black">lockeduser</h2>
+                <p className="text-zinc-500">Level {level}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="rounded-3xl bg-zinc-900 border border-zinc-800 p-5">
+                  <p className="text-zinc-500 text-sm">XP</p>
+                  <h3 className="text-3xl font-bold mt-2">{xp}</h3>
+                </div>
+
+                <div className="rounded-3xl bg-zinc-900 border border-zinc-800 p-5">
+                  <p className="text-zinc-500 text-sm">Level</p>
+                  <h3 className="text-3xl font-bold mt-2">{level}</h3>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-4 gap-3 mt-8 pb-3">
+          <button
+            onClick={() => setScreen("home")}
+            className={`py-4 rounded-2xl flex justify-center ${screen === "home" ? "bg-white text-black" : "bg-zinc-900 text-white"}`}
+          >
+            <Play />
+          </button>
+
+          <button
+            onClick={() => setScreen("stats")}
+            className={`py-4 rounded-2xl flex justify-center ${screen === "stats" ? "bg-white text-black" : "bg-zinc-900 text-white"}`}
+          >
+            <BarChart3 />
+          </button>
+
+          <button
+            onClick={() => setScreen("themes")}
+            className={`py-4 rounded-2xl flex justify-center ${screen === "themes" ? "bg-white text-black" : "bg-zinc-900 text-white"}`}
+          >
+            <Palette />
+          </button>
+
+          <button
+            onClick={() => setScreen("profile")}
+            className={`py-4 rounded-2xl flex justify-center ${screen === "profile" ? "bg-white text-black" : "bg-zinc-900 text-white"}`}
+          >
+            <User />
+          </button>
         </div>
       </div>
     </div>
